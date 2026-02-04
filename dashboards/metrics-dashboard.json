@@ -1,0 +1,270 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "title": "Metrics Ingestion Rate",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Metrics",
+            "events_processed",
+            "service",
+            "vector",
+            {
+              "stat": "Sum",
+              "period": 60
+            }
+          ]
+        ],
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "CPU Usage by Service",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Application",
+            "cpu_usage_percent",
+            "service",
+            "api-gateway",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "cpu_usage_percent",
+            "service",
+            "user-service",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "cpu_usage_percent",
+            "service",
+            "payment-service",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "cpu_usage_percent",
+            "service",
+            "inventory-service",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "cpu_usage_percent",
+            "service",
+            "order-service",
+            {
+              "stat": "Average"
+            }
+          ]
+        ],
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Memory Usage by Service",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Application",
+            "memory_usage_bytes",
+            "service",
+            "api-gateway",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "memory_usage_bytes",
+            "service",
+            "user-service",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "memory_usage_bytes",
+            "service",
+            "payment-service",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "memory_usage_bytes",
+            "service",
+            "inventory-service",
+            {
+              "stat": "Average"
+            }
+          ],
+          [
+            "Vector/Application",
+            "memory_usage_bytes",
+            "service",
+            "order-service",
+            {
+              "stat": "Average"
+            }
+          ]
+        ],
+        "view": "timeSeries",
+        "stat": "Average"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "HTTP Requests Total",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Application",
+            "http_requests_total",
+            "service",
+            "api-gateway",
+            {
+              "stat": "Sum",
+              "period": 60
+            }
+          ]
+        ],
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Active Connections",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Application",
+            "active_connections",
+            "service",
+            "api-gateway",
+            {
+              "stat": "Average"
+            }
+          ]
+        ],
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 18,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Queue Depth",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Application",
+            "queue_depth",
+            "queue",
+            "orders",
+            {
+              "stat": "Average"
+            }
+          ]
+        ],
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 18,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Host CPU Usage",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Host",
+            "host_cpu_seconds_total",
+            {
+              "stat": "Average"
+            }
+          ]
+        ],
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 24,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "title": "Vector Internal Metrics",
+        "region": "us-east-1",
+        "metrics": [
+          [
+            "Vector/Metrics",
+            "component_received_events_total",
+            "service",
+            "vector",
+            {
+              "stat": "Sum"
+            }
+          ],
+          [
+            "Vector/Metrics",
+            "component_sent_events_total",
+            "service",
+            "vector",
+            {
+              "stat": "Sum"
+            }
+          ]
+        ],
+        "view": "timeSeries"
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+cat > daemonset.yaml << 'ENDOFFILE'
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vector
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: vector
+  template:
+    metadata:
+      labels:
+        app: vector
+    spec:
+      serviceAccountName: vector
+      containers:
+        - name: vector
+          image: timberio/vector:0.35.0-debian
+          args: ["--config-dir", "/etc/vector/"]
+          env:
+            - name: VECTOR_LOG
+              value: "info"
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 8686
+              name: api
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector/
+            - name: data
+              mountPath: /var/lib/vector
+            - name: procfs
+              mountPath: /host/proc
+              readOnly: true
+            - name: sysfs
+              mountPath: /host/sys
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: api
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+      volumes:
+        - name: config
+          configMap:
+            name: vector-config
+        - name: data
+          hostPath:
+            path: /var/lib/vector
+            type: DirectoryOrCreate
+        - name: procfs
+          hostPath:
+            path: /proc
+        - name: sysfs
+          hostPath:
+            path: /sys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector
+  namespace: observability
+spec:
+  selector:
+    app: vector
+  ports:
+    - name: api
+      port: 8686
+      targetPort: 8686
+ENDOFFILE

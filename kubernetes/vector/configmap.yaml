@@ -1,0 +1,106 @@
+cat > configmap.yaml << 'ENDOFFILE'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+  namespace: observability
+data:
+  vector.yaml: |
+    api:
+      enabled: true
+      address: 0.0.0.0:8686
+    
+    sources:
+      dummy_logs_primary:
+        type: demo_logs
+        format: json
+        interval: 0.001
+        lines:
+          - '{"timestamp":"{{ timestamp }}","level":"info","service":"api-gateway","trace_id":"{{ uuid }}","message":"Request processed","method":"GET","path":"/api/v1/users/{{ range 1000 9999 }}","status_code":200,"duration_ms":{{ range 5 500 }}}'
+          - '{"timestamp":"{{ timestamp }}","level":"info","service":"user-service","trace_id":"{{ uuid }}","message":"User authenticated","user_id":"user-{{ range 10000 99999 }}"}'
+          - '{"timestamp":"{{ timestamp }}","level":"warn","service":"payment-service","trace_id":"{{ uuid }}","message":"Payment retry","order_id":"ORD-{{ range 100000 999999 }}","attempt":{{ range 1 3 }}}'
+          - '{"timestamp":"{{ timestamp }}","level":"error","service":"inventory-service","trace_id":"{{ uuid }}","message":"Database timeout","error_code":"DB_TIMEOUT"}'
+          - '{"timestamp":"{{ timestamp }}","level":"info","service":"order-service","trace_id":"{{ uuid }}","message":"Order created","order_id":"ORD-{{ range 100000 999999 }}"}'
+
+      dummy_logs_secondary:
+        type: demo_logs
+        format: json
+        interval: 0.002
+        lines:
+          - '{"timestamp":"{{ timestamp }}","level":"info","service":"analytics-service","message":"Event tracked","event_type":"page_view"}'
+          - '{"timestamp":"{{ timestamp }}","level":"warn","service":"rate-limiter","message":"Rate limit approaching","current_rate":{{ range 80 95 }}}'
+
+      host_metrics:
+        type: host_metrics
+        collectors: [cpu, memory, disk, filesystem, network]
+        scrape_interval_secs: 10
+        namespace: host
+      
+      internal_metrics:
+        type: internal_metrics
+        scrape_interval_secs: 10
+        namespace: vector
+
+      synthetic_metrics:
+        type: demo_logs
+        format: json
+        interval: 0.01
+        lines:
+          - '{"metric_name":"http_requests_total","value":{{ range 1 100 }},"dimensions":{"method":"GET","status":"200","service":"api-gateway"}}'
+          - '{"metric_name":"cpu_usage_percent","value":{{ range 5 85 }}.{{ range 0 99 }},"dimensions":{"service":"api-gateway"}}'
+          - '{"metric_name":"memory_usage_bytes","value":{{ range 100000000 4000000000 }},"dimensions":{"service":"api-gateway"}}'
+          - '{"metric_name":"active_connections","value":{{ range 100 5000 }},"dimensions":{"service":"api-gateway"}}'
+          - '{"metric_name":"queue_depth","value":{{ range 0 500 }},"dimensions":{"queue":"orders"}}'
+
+    transforms:
+      enriched_logs:
+        type: remap
+        inputs: [dummy_logs_primary, dummy_logs_secondary]
+        source: |
+          . = parse_json!(string!(.message)) ?? .
+          .processed_at = now()
+          .environment = "production"
+          .cluster = "observability-cluster"
+          .k8s_pod = get_env_var("HOSTNAME") ?? "unknown"
+          .k8s_node = get_env_var("NODE_NAME") ?? "unknown"
+
+      parsed_metrics:
+        type: remap
+        inputs: [synthetic_metrics]
+        source: |
+          . = parse_json!(string!(.message)) ?? .
+          .timestamp = now()
+          .k8s_node = get_env_var("NODE_NAME") ?? "unknown"
+
+    sinks:
+      cloudwatch_logs:
+        type: aws_cloudwatch_logs
+        inputs: [enriched_logs]
+        group_name: "/vector/logs/application"
+        stream_name: "{{ k8s_node }}-{{ k8s_pod }}"
+        region: "us-east-1"
+        encoding:
+          codec: json
+        compression: gzip
+        batch:
+          max_bytes: 1048576
+          timeout_secs: 5
+
+      cloudwatch_metrics:
+        type: aws_cloudwatch_metrics
+        inputs: [parsed_metrics]
+        namespace: "Vector/Application"
+        region: "us-east-1"
+
+      cloudwatch_host_metrics:
+        type: aws_cloudwatch_metrics
+        inputs: [host_metrics]
+        namespace: "Vector/Host"
+        region: "us-east-1"
+
+      cloudwatch_vector_metrics:
+        type: aws_cloudwatch_metrics
+        inputs: [internal_metrics]
+        namespace: "Vector/Metrics"
+        region: "us-east-1"
+ENDOFFILE
